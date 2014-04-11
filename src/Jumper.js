@@ -48,9 +48,10 @@ var Jumper = cc.Sprite.extend({
 
         this.updateYMovement();
         this.updateXMovement();
+        this.leftRightWarping();
 
         var newPositionRect = this.getPlayerRect();
-        this.handleCollision( currentPositionRect,
+        this.collisionHandler( currentPositionRect,
                               newPositionRect );
 
         this.updateSpritePosition();
@@ -66,6 +67,9 @@ var Jumper = cc.Sprite.extend({
                 this.accelerateX( -1 );
             }
         }
+    },
+
+    leftRightWarping: function() {
         this.x += this.vx;
         if ( this.x < 0 ) {
             this.x += screenWidth;
@@ -79,14 +83,23 @@ var Jumper = cc.Sprite.extend({
         if ( this.ground ) {
             this.vy = 0;
             if ( this.jump ) {
-                this.vy = this.jumpV;
-                this.y = this.ground.getTopY() + this.vy;
-                this.ground = null;
+                this.jumpYDirection();
             }
         } else {
-            this.vy += this.g;
-            this.y += this.vy;
+            this.fallByEarthGravity();
+            
         }
+    },
+
+    fallByEarthGravity: function(){
+        this.vy += this.g;
+        this.y += this.vy;
+    },
+
+    jumpYDirection: function(){
+        this.vy = this.jumpV;
+        this.y = this.ground.getTopY() + this.vy;
+        this.ground = null;
     },
 
     isSameDirection: function( dir ) {
@@ -119,23 +132,27 @@ var Jumper = cc.Sprite.extend({
         }
     },
 
-    handleCollision: function( oldRect, newRect ) {
+    collisionHandler: function( oldRect , newRect ) {
         if ( this.ground ) {
             if ( !this.ground.onTop( newRect ) ) {
                 this.ground = null;
             }
         } else {
             if ( this.vy <= 0 ) {
-                var topBlock = this.findTopBlock( this.blocks,
-                                                  oldRect,
-                                                  newRect );
-                
-                if ( topBlock ) {
-                    this.ground = topBlock;
-                    this.y = topBlock.getTopY();
-                    this.vy = 0;
-                }
+                this.checkOnTop( oldRect , newRect );
             }
+        }
+    },
+
+    
+    checkOnTop: function( oldRect, newRect ) {
+        var topBlock = this.findTopBlock( this.blocks,
+                                                  oldRect,
+                                                  newRect );   
+        if ( topBlock ) {
+            this.ground = topBlock;
+            this.y = topBlock.getTopY();
+            this.vy = 0;
         }
     },
     
